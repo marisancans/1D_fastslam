@@ -32,7 +32,7 @@ def imshow(img, w_name='window', waitKey=0):
     cv2.imshow(w_name, img)
     cv2.waitKey(waitKey)
 
-def show_location_progabilities(particles: List[Particle]):
+def show_location_progabilities(particles: List[Particle], idx):
     cell_w = 600
     cell_h = 200
     block = cell_w / 11
@@ -41,7 +41,7 @@ def show_location_progabilities(particles: List[Particle]):
     for loc in [2, 5 ,10]:
         X = int(loc * block)
         img = cv2.line(img, (X, 0), (X, cell_h), (0, 0, 1.0), 1)
-        img = cv2.putText(img, f'{loc:.0f}', (X, cell_h//2), 0, 0.5, (0, 0, 1.0), 1, cv2.LINE_AA) 
+        img = cv2.putText(img, f'{loc:.0f}', (X, cell_h//2), 0, 0.5, (0, 0, 1.0), 2, cv2.LINE_AA) 
 
     img_robot_x = img.copy()
     for particle in particles:
@@ -62,12 +62,13 @@ def show_location_progabilities(particles: List[Particle]):
 
         for a in avg:
             obj_offset = int(a * block)
-            partrticles_x_avg = cv2.line(partrticles_x_avg, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 1.00), 1)
+            partrticles_x_avg = cv2.line(partrticles_x_avg, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 1.00), 3)
 
 
     img_final = np.vstack([img_robot_x, partrticles_x, partrticles_x_avg])
     
     imshow(img_final)
+    cv2.imwrite(f'./images/{idx}.png', img_final)
 
 def move_robot(particles: List[Particle], movement_steps):
     err_interval = abs(movement_steps * MOVEMENT_PROBABILITY) # 0.02 ==> 0.2 * N_SOLI
@@ -197,42 +198,44 @@ def object_detected(particles: List[Particle], object_distance):
 # State
 particles = [Particle(X=ROBOT_START_POSITION) for x in range(N_PARTICLES)]
 
+show_location_progabilities(particles, 0)
+
 # 1.) Robots parvietojas 3m pa labi
 movement_steps = 3
 move_robot(particles, movement_steps)
-show_location_progabilities(particles)
+show_location_progabilities(particles, 1)
 
 # 2.) Robots uztver objektu 2m pa pabi
 object_distance = 2
 object_detected(particles, object_distance)
-show_location_progabilities(particles)
+show_location_progabilities(particles, 2)
 
 # 3. ) Robots pārvietojas 4m pa kreisi
 movement_steps = -4
 move_robot(particles, movement_steps)
-show_location_progabilities(particles)
+show_location_progabilities(particles, 3)
 
 # 4.) Robots uztver objektu 2m pa kreisi
 object_distance = -2
 object_detected(particles, object_distance)
-show_location_progabilities(particles)
+show_location_progabilities(particles, 4)
 
 # 5. ) Robots pārvietojas 3m pa labi
 movement_steps = 3
 move_robot(particles, movement_steps)
-show_location_progabilities(particles)
+show_location_progabilities(particles, 5)
 
 # 6.) Robots VLREIZ uztver objektu 3m pa labi
 object_distance = 3
 object_detected(particles, object_distance)
-show_location_progabilities(particles)
+show_location_progabilities(particles, 6)
 
 # 7. ) Robots pārvietojas 1m pa kreisi
 movement_steps = -1
 move_robot(particles, movement_steps)
-show_location_progabilities(particles)
+show_location_progabilities(particles, 7)
 
 # 8.) Robots uztver objektu 3m pa kreisi
 object_distance = -1
 object_detected(particles, object_distance)
-show_location_progabilities(particles)
+show_location_progabilities(particles, 8)
