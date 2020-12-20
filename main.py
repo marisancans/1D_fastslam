@@ -40,8 +40,8 @@ def show_location_progabilities(particles: List[Particle], idx):
 
     for loc in [2, 5 ,10]:
         X = int(loc * block)
-        img = cv2.line(img, (X, 0), (X, cell_h), (0, 0, 1.0), 1)
-        img = cv2.putText(img, f'{loc:.0f}', (X, cell_h//2), 0, 0.5, (0, 0, 1.0), 2, cv2.LINE_AA) 
+        img = cv2.line(img, (X, 0), (X, cell_h), (0, 0, 1.0), 2)
+        img = cv2.putText(img, f'{loc:.0f}', (X, cell_h//2), 0, 0.5, (0, 0, 1.0), 1, cv2.LINE_AA) 
 
     img_robot_x = img.copy()
     for particle in particles:
@@ -68,6 +68,7 @@ def show_location_progabilities(particles: List[Particle], idx):
     img_final = np.vstack([img_robot_x, partrticles_x, partrticles_x_avg])
     
     imshow(img_final)
+    img_final = (img_final * 255.0).astype(np.uint8) 
     cv2.imwrite(f'./images/{idx}.png', img_final)
 
 def move_robot(particles: List[Particle], movement_steps):
