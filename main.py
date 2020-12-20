@@ -21,9 +21,9 @@ class Particle:
     K: List[float] = field(default_factory = lambda: [])
 
 
-N_PARTICLES = 10
-MOVEMENT_PROBABILITY = 0.02 # Pārvietošanās nenoteiktība
-MEASUREMENT_PROBABILITY = 0.01 # Mērījuma nenoteiktībai
+N_PARTICLES = 50
+MOVEMENT_PROBABILITY = 0.2 # Pārvietošanās nenoteiktība
+MEASUREMENT_PROBABILITY = 0.1 # Mērījuma nenoteiktībai
 ROBOT_START_POSITION = 5
 DELTA = 1.0
 
@@ -43,30 +43,31 @@ def show_location_progabilities(particles: List[Particle]):
         img = cv2.line(img, (X, 0), (X, cell_h), (0, 0, 1.0), 1)
         img = cv2.putText(img, f'{loc:.0f}', (X, cell_h//2), 0, 0.5, (0, 0, 1.0), 1, cv2.LINE_AA) 
 
-    img = np.zeros((cell_h, cell_w, 3))
+    img_robot_x = img.copy()
     for particle in particles:
         X = int(particle.X * block)
-        img = cv2.line(img, (X, 0), (X, cell_h), (1.0, 1.0, 0), 1)
+        img_robot_x = cv2.line(img_robot_x, (X, 0), (X, cell_h), (1.0, 1.0, 0), 1)
 
     
-
+    partrticles_x = img.copy()
     for particle in particles:
         for obj_x in particle.object_positions:
             obj_offset = int(obj_x * block)
-            img = cv2.line(img, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 0), 1)
+            partrticles_x = cv2.line(partrticles_x, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 0), 1)
 
+    partrticles_x_avg = img.copy()
     if Particle.nr_objects:
         positions_np = np.array([x.object_positions for x in particles])
         avg = np.average(positions_np, axis=0)
 
         for a in avg:
             obj_offset = int(a * block)
-            img = cv2.line(img, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 1.00), 1)
+            partrticles_x_avg = cv2.line(partrticles_x_avg, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 1.00), 1)
 
 
-
+    img_final = np.vstack([img_robot_x, partrticles_x, partrticles_x_avg])
     
-    imshow(img)
+    imshow(img_final)
 
 def move_robot(particles: List[Particle], movement_steps):
     err_interval = abs(movement_steps * MOVEMENT_PROBABILITY) # 0.02 ==> 0.2 * N_SOLI
@@ -221,7 +222,7 @@ movement_steps = 3
 move_robot(particles, movement_steps)
 show_location_progabilities(particles)
 
-# 6.) Robots uztver objektu 3m pa labi
+# 6.) Robots VLREIZ uztver objektu 3m pa labi
 object_distance = 3
 object_detected(particles, object_distance)
 show_location_progabilities(particles)
