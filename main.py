@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import cv2
-
+import copy
 from dataclasses import dataclass, field
 from typing import List, ClassVar
 
@@ -21,9 +21,9 @@ class Particle:
     K: List[float] = field(default_factory = lambda: [])
 
 
-N_PARTICLES = 100
-MOVEMENT_PROBABILITY = 0.2 # Pārvietošanās nenoteiktība
-MEASUREMENT_PROBABILITY = 0.1 # Mērījuma nenoteiktībai
+N_PARTICLES = 10
+MOVEMENT_PROBABILITY = 0.02 # Pārvietošanās nenoteiktība
+MEASUREMENT_PROBABILITY = 0.01 # Mērījuma nenoteiktībai
 ROBOT_START_POSITION = 5
 DELTA = 1.0
 
@@ -38,14 +38,22 @@ def show_location_progabilities(particles: List[Particle]):
     block = cell_w / 11
     img = np.zeros((cell_h, cell_w, 3))
 
-    # for particle in particles:
-    #     X = int(particle.X * block)
-    #     img = cv2.line(img, (X, 0), (X, cell_h), (1.0, 1.0, 0), 1)
+    for loc in [2, 5 ,10]:
+        X = int(loc * block)
+        img = cv2.line(img, (X, 0), (X, cell_h), (0, 0, 1.0), 1)
+        img = cv2.putText(img, f'{loc:.0f}', (X, cell_h//2), 0, 0.5, (0, 0, 1.0), 1, cv2.LINE_AA) 
 
-    # for particle in particles:
-    #     for obj_x in particle.object_positions:
-    #         obj_offset = int(obj_x * block)
-    #         img = cv2.line(img, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 0), 1)
+    img = np.zeros((cell_h, cell_w, 3))
+    for particle in particles:
+        X = int(particle.X * block)
+        img = cv2.line(img, (X, 0), (X, cell_h), (1.0, 1.0, 0), 1)
+
+    
+
+    for particle in particles:
+        for obj_x in particle.object_positions:
+            obj_offset = int(obj_x * block)
+            img = cv2.line(img, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 0), 1)
 
     if Particle.nr_objects:
         positions_np = np.array([x.object_positions for x in particles])
@@ -55,29 +63,33 @@ def show_location_progabilities(particles: List[Particle]):
             obj_offset = int(a * block)
             img = cv2.line(img, (obj_offset, 0), (obj_offset, cell_h), (0, 1.0, 1.00), 1)
 
-    for loc in [2, 5 ,10]:
-        X = int(loc * block)
-        img = cv2.line(img, (X, 0), (X, cell_h), (0, 0, 1.0), 1)
-        img = cv2.putText(img, f'{loc:.0f}', (X, cell_h//2), 0, 0.5, (0, 0, 1.0), 1, cv2.LINE_AA) 
+
 
     
     imshow(img)
 
 def move_robot(particles: List[Particle], movement_steps):
-    err_interval = abs(movement_steps * MOVEMENT_PROBABILITY)
+    err_interval = abs(movement_steps * MOVEMENT_PROBABILITY) # 0.02 ==> 0.2 * N_SOLI
 
     for i, _ in enumerate(particles):
-        error = np.random.uniform(-err_interval, err_interval, 12)
+        error = np.random.normal(0, err_interval, 12)
         spread = np.sum(error) / 2
-        particles[i].X += spread
+        particles[i].X += (spread + movement_steps)
 
     return particles
 
 
 def push_object_probabilities(particles: List[Particle], object_distance):
+    p = abs(object_distance * MEASUREMENT_PROBABILITY)
+
     for i, _ in enumerate(particles):
-        p = abs(object_distance * MEASUREMENT_PROBABILITY)
         particles[i].object_probabilities.append(p)
+
+        print('\----')
+        for a, _ in enumerate(particles):
+            print(particles[a].object_probabilities, i)
+            x=0
+        x=0
 
 def push_object_positions(particles: List[Particle], positions):
     for i, _ in enumerate(particles): 
@@ -173,9 +185,9 @@ def object_detected(particles: List[Particle], object_distance):
             exit(0)
 
         # reasign values based on picked indicies
-        particles_copy = particles.copy()
+        particles_copy = copy.deepcopy(particles)
         for old, new in zip(range(N_PARTICLES), indicies):
-            particles[old] = particles_copy[new]
+            particles[old] = copy.deepcopy(particles_copy[new])
     
 
 
